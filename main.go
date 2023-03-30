@@ -13,8 +13,8 @@ import (
 // TODO consider refactoring into models, handlers, fizzbuzz and move tests too
 
 type FizzBuzzConfig struct {
-	Int1  int    `form:"int1" binding:"required,numeric,max=2147483647,min=-2147483648"`
-	Int2  int    `form:"int2" binding:"required,numeric,max=2147483647,min=-2147483648"`
+	Int1  int    `form:"int1" binding:"required,numeric,max=2147483647,min=1"`
+	Int2  int    `form:"int2" binding:"required,numeric,max=2147483647,min=1"`
 	Limit int    `form:"limit" binding:"required,numeric,max=2147483647,min=1"`
 	Str1  string `form:"str1" binding:"required"`
 	Str2  string `form:"str2" binding:"required"`

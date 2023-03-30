@@ -71,8 +71,8 @@ func TestQueryParamValidation(t *testing.T) {
 
 		// Min value
 		{"str1=bar&str2=foo&limit=-12&int1=7&int2=3", "Error:Field validation for 'Limit' failed on the 'min' tag"},
-		{"str1=bar&str2=foo&limit=100&int1=-2147483657&int2=3", "Error:Field validation for 'Int1' failed on the 'min' tag"},
-		{"str1=bar&str2=foo&limit=100&int1=7&int2=-2147483657", "Error:Field validation for 'Int2' failed on the 'min' tag"},
+		{"str1=bar&str2=foo&limit=100&int1=-1&int2=3", "Error:Field validation for 'Int1' failed on the 'min' tag"},
+		{"str1=bar&str2=foo&limit=100&int1=7&int2=-3", "Error:Field validation for 'Int2' failed on the 'min' tag"},
 
 		// Numeric
 		{"str1=bar&str2=foo&limit=ABC&int1=7&int2=3", "strconv.ParseInt: parsing \\\"ABC\\\": invalid syntax"},
