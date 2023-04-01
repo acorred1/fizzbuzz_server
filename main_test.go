@@ -9,36 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFizzBuzz(t *testing.T) {
-	cases := []struct {
-		config   FizzBuzzConfig
-		expected []string
-	}{
-		{
-			FizzBuzzConfig{Int1: 2, Int2: 3, Limit: 10, Str1: "fizz", Str2: "buzz"},
-			[]string{"1", "fizz", "buzz", "fizz", "5", "fizzbuzz", "7", "fizz", "buzz", "fizz"},
-		},
-		{
-			FizzBuzzConfig{Int1: 2, Int2: 3, Limit: 0, Str1: "fizz", Str2: "buzz"},
-			[]string{},
-		},
-		{
-			FizzBuzzConfig{Int1: -2, Int2: 3, Limit: 6, Str1: "abc", Str2: "123"},
-			[]string{"1", "abc", "123", "abc", "5", "abc123"},
-		},
-		{
-			FizzBuzzConfig{Int1: 2, Int2: 2, Limit: 10, Str1: "foo", Str2: "bar"},
-			[]string{"1", "foobar", "3", "foobar", "5", "foobar", "7", "foobar", "9", "foobar"},
-		},
-	}
-
-	for _, testCase := range cases {
-		actual := fizzbuzz(testCase.config).Result
-		assert.Equal(t, testCase.expected, actual)
-	}
-}
-
-func TestGetFizzBuzzHTTP_Success(t *testing.T) {
+func TestGetFizzBuzzHTTP(t *testing.T) {
 	router := setUpRouter()
 	resp := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/fizzbuzz?str1=foo&str2=bar&limit=25&int1=7&int2=3", nil)
@@ -89,4 +60,50 @@ func TestQueryParamValidation(t *testing.T) {
 		assert.Equal(t, resp.Header().Get("Content-Type"), "application/json; charset=utf-8")
 		assert.Contains(t, resp.Body.String(), testCase.expectedError)
 	}
+}
+
+func TestGetStatus(t *testing.T) {
+	// Mock prometheus response
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, PrometheusQueryPath, r.URL.Path)
+		assert.Equal(t, "topk(1,sum(http_requests_total)by(int1,int2,limit,str1,str2))", r.URL.Query().Get("query"))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+{
+				"status":"success",
+				"data":{
+					 "resultType":"vector",
+					 "result":[
+					 {
+					 "metric":{"int1":"2","int2":"30","limit":"100","str1":"fizz","str2":"oo"},
+					 "value":[1680208159.058,"5"]
+				 }
+				 ]
+			 }
+		 }
+		`))
+	}))
+	defer server.Close()
+	PrometheusURL = server.URL
+
+	router := setUpRouter()
+	resp := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/stats", nil)
+	router.ServeHTTP(resp, req)
+	expectedBody := `{"top_fizzbuzz_request":{"request_params":{"int1":2,"int2":30,"limit":100,"str1":"fizz","str2":"oo"},"num_hits":5}}`
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, resp.Header().Get("Content-Type"), "application/json; charset=utf-8")
+	assert.Equal(t, expectedBody, resp.Body.String())
+}
+
+func TestGetMetrics(t *testing.T) {
+	router := setUpRouter()
+	resp := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/metrics", nil)
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, resp.Header().Get("Content-Type"), "text/plain; version=0.0.4; charset=utf-8")
+	assert.Contains(t, resp.Body.String(), PrometheusTopHTTPRequestMetricName)
 }

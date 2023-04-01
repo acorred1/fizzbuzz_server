@@ -1,0 +1,17 @@
+services:
+  fizzbuzz:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - LOG_LEVEL=DEBUG
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+
+volumes:
+  prometheus-data:
