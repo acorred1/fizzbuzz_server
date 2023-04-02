@@ -30,6 +30,10 @@ func fizzbuzz(config FizzBuzzConfig) FizzBuzzResult {
 	return FizzBuzzResult{Result: result}
 }
 
+// Attempts to parse the response from the Prometheus query for the top fizzbuzz request
+// If successful it returns:
+// 1) the number of hits for the top request
+// 2) the parameters for the top request
 func parsePrometheusResponse(body []byte) (int, *FizzBuzzConfig, error) {
 	promTopKResp := PrometheusTopKMetricResponse{}
 	json.Unmarshal([]byte(body), &promTopKResp)
